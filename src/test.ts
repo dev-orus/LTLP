@@ -42,7 +42,14 @@ function test(x: number, y: number) {
   return x + y;
 }
 
-console.log(await ltlpTest.testFuncArg(test));
+console.log(await ltlpTest.testFuncArg(test), 1);
+console.log(await ltlpTest.testFuncArg(test), 2);
+console.log(await ltlpTest.testFuncArg(test), 3);
+console.log(await ltlpTest.testFuncArg(test), 4);
+console.log(await ltlpTest.testFuncArg(test), 5);
+console.log(await ltlpTest.testFuncArg(test), 6);
+console.log(await ltlpTest.testFuncArg(test), 7);
+console.log(await ltlpTest.testFuncArg(test), 8);
 
 function delay(ms: number) {
   return new Promise((resolve) => {

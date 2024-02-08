@@ -3,6 +3,18 @@ import json
 from threading import Thread
 import traceback
 import builtins
+import psutil
+import sys
+
+def kill_processes_on_port(port):
+    for proc in psutil.process_iter(['pid', 'connections']):
+        try:
+            if proc.info['connections'] is not None:
+                for conn in proc.info['connections']:
+                    if conn.laddr and conn.laddr.port == int(port):
+                        proc.kill()
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+            pass
 
 class ltlpTest:
     def testFuncArg(fn):
@@ -14,10 +26,7 @@ KEY = 'mykey'
 OBJECTS = {'builtins': builtins, 'ltlpTest': ltlpTest}
 PROCESSES = []
 
-# if name=='nt':
-    # system(f'netstat -ano | findstr :{PORT}')
-# else:
-    # system(f'lsof -nti:{PORT} | xargs kill -9')
+kill_processes_on_port(PORT)
 
 def createFunction(c: socket.socket, fnid):
     def wrapper(*args):
@@ -104,3 +113,5 @@ while True:
     except Exception as e:
         print(e)
         cs.close()
+
+server_socket.close()

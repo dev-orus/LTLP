@@ -9,7 +9,9 @@
     "start": "node dist/index.js",
     "test": "node dist/test.js",
     "server": "node dist/test-server.js",
-    "add": "npm install @types/node"
+    "add": "npm install @types/node",
+    "install": "python3 -m venv servers/.venv; servers/.venv/bin/pip install psutil",
+    "install-win": "python3 -m venv servers/.venv; servers/.venv/scripts/pip install psutil"
   },
   "keywords": [],
   "author": "",

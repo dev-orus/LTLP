@@ -30,6 +30,15 @@ type RequestData = {
   process: number;
 };
 
+type RequestData2 = {
+  type: "call" | "import";
+  args: Array<any>;
+  kwargs?: Object;
+  attr: Array<string>;
+  moduleName: string;
+  process: number;
+};
+
 type ReturnData = {
   value: any;
   error: true | false;
@@ -144,17 +153,16 @@ async function Language(
   lng.socket.write(JSON.stringify(lng.thisHandshake));
   lng.handshake = JSON.parse(await lng.read());
   lng.socket.on("data", (dataRaw) => {
-    let data = JSON.parse(dataRaw.toString());
+    let data: RequestData2 = JSON.parse(dataRaw.toString());
     if (data.type === "call") {
-      lng.ptrVars[data.attr[0]];
-      lng.processes.splice(data.attr[0], 1);
       lng.socket.write(
         JSON.stringify({
           error: false,
-          value: lng.ptrVars[data.attr[0]](...data.args),
+          value: lng.ptrVars[parseInt(data.attr[0].toString())](...data.args),
           process: data.process,
         })
       );
+      lng.ptrVars.splice(parseInt(data.attr[0].toString()), 1);
     } else if (data.type === "import") {
       console.error("[LTLP] Cannot import modules as node");
     }
@@ -167,6 +175,7 @@ export {
   Language_setup,
   ID,
   RequestData,
+  RequestData2,
   FunctionData,
   ModuleData,
   HandShake,
