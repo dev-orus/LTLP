@@ -35,7 +35,7 @@ def createFunction(c: socket.socket, fnid):
         d = json.dumps({
             'type': 'call',
             'module': '',
-            'attr': [fnid],
+            'attr': [str(fnid)],
             'args': list(args),
             'process': procid
         }).encode()

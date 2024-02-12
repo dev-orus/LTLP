@@ -53,6 +53,13 @@ type FunctionData = {
 
 type ModuleData = { name: "" };
 
+function isClass(obj: any): boolean {
+  return (
+    typeof obj === "function" &&
+    /^class\s/.test(Function.prototype.toString.call(obj))
+  );
+}
+
 class Language_setup {
   socket: net.Socket;
   handshake: HandShake = { type: null, id: "", key: "" };
@@ -60,7 +67,7 @@ class Language_setup {
   host: string;
   key: string;
   processes: Array<number> = [];
-  ptrVars: Array<any> = [];
+  ptrVars: { [key: string]: any } = {};
   constructor(HOST: string, PORT: number, KEY: string) {
     this.socket = new net.Socket();
     this.socket.connect(PORT, HOST, () => {});
@@ -74,13 +81,6 @@ class Language_setup {
       });
     });
   }
-  genProcess() {
-    var procId = randomInt(4096);
-    while (this.processes.includes(procId)) {
-      procId = randomInt(4096);
-    }
-    return procId;
-  }
   async callFunc(
     moduleName: string,
     attr: Array<string>,
@@ -88,14 +88,19 @@ class Language_setup {
     kwargs: Object = {}
   ) {
     args = args.map((i) => {
+      if (isClass(i)) {
+        this.ptrVars["class_" + Object.keys(this.ptrVars).length.toString()] =
+          i;
+        return `class_ADDR&<${Object.keys(this.ptrVars).length}>`;
+      }
       if (typeof i === "function") {
-        this.ptrVars.push(i);
-        return `fn_ADDR&<${this.ptrVars.length - 1}>`;
+        this.ptrVars[Object.keys(this.ptrVars).length] = i;
+        return `fn_ADDR&<${Object.keys(this.ptrVars).length - 1}>`;
       } else {
         return i;
       }
     });
-    const procId = this.genProcess();
+    const procId = this.processes.length;
     const data: RequestData = {
       type: "call",
       attr: attr,
@@ -118,7 +123,7 @@ class Language_setup {
     }
   }
   async ImportMod(moduleName: string) {
-    const procId = this.genProcess();
+    const procId = this.processes.length;
     const data: RequestData = {
       type: "import",
       moduleName: moduleName,
@@ -158,11 +163,11 @@ async function Language(
       lng.socket.write(
         JSON.stringify({
           error: false,
-          value: lng.ptrVars[parseInt(data.attr[0].toString())](...data.args),
+          value: lng.ptrVars[data.attr[0].toString()](...data.args),
           process: data.process,
         })
       );
-      lng.ptrVars.splice(parseInt(data.attr[0].toString()), 1);
+      delete lng.ptrVars[data.attr[0].toString()];
     } else if (data.type === "import") {
       console.error("[LTLP] Cannot import modules as node");
     }

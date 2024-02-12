@@ -1,3 +1,4 @@
+import { constrainedMemory } from "process";
 import { Language } from "./index.js";
 import { spawn } from "child_process";
 
@@ -20,44 +21,6 @@ function waitUntilStart() {
 await waitUntilStart();
 
 const py = await Language("127.0.0.1", 35569, "mykey");
-
-// await py.ImportMod("os");
-
-const os = {
-  system: async (command: any) => {
-    return await py.callFunc("os", ["system"], [command]);
-  },
-  exists: async (command: string) => {
-    return await py.callFunc("os", ["path", "exists"], [command]);
-  },
-};
-
-const ltlpTest = {
-  testFuncArg: async (fn: Function) => {
-    return await py.callFunc("ltlpTest", ["testFuncArg"], [fn]);
-  },
-};
-
-function test(x: number, y: number) {
-  return x + y;
-}
-
-console.log(await ltlpTest.testFuncArg(test), 1);
-console.log(await ltlpTest.testFuncArg(test), 2);
-console.log(await ltlpTest.testFuncArg(test), 3);
-console.log(await ltlpTest.testFuncArg(test), 4);
-console.log(await ltlpTest.testFuncArg(test), 5);
-console.log(await ltlpTest.testFuncArg(test), 6);
-console.log(await ltlpTest.testFuncArg(test), 7);
-console.log(await ltlpTest.testFuncArg(test), 8);
-
-function delay(ms: number) {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(0);
-    }, ms);
-  });
-}
 
 pythonExec.emit("close");
 
