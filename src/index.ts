@@ -8,10 +8,7 @@ This is the client
 
 */
 
-import { randomInt } from "crypto";
 import * as net from "net";
-import { constrainedMemory } from "process";
-import { ElementFlags } from "typescript";
 
 const ID = "node";
 
@@ -85,19 +82,33 @@ class Language_setup {
     moduleName: string,
     attr: Array<string>,
     args: Array<any> = [],
-    kwargs: Object = {}
+    Kwargs: { [key: string]: any } = {}
   ) {
     args = args.map((i) => {
       if (isClass(i)) {
         this.ptrVars["class_" + Object.keys(this.ptrVars).length.toString()] =
           i;
-        return `class_ADDR&<${Object.keys(this.ptrVars).length}>`;
+        return `class_ADDR&<${Object.keys(this.ptrVars).length - 1}>`;
       }
       if (typeof i === "function") {
         this.ptrVars[Object.keys(this.ptrVars).length] = i;
         return `fn_ADDR&<${Object.keys(this.ptrVars).length - 1}>`;
       } else {
         return i;
+      }
+    });
+    var kwargs: { [key: string]: any } = {};
+    Object.keys(Kwargs).map((i) => {
+      if (isClass(Kwargs[i])) {
+        this.ptrVars["class_" + Object.keys(this.ptrVars).length.toString()] =
+          Kwargs[i];
+        kwargs[i] = `class_ADDR&<${Object.keys(this.ptrVars).length - 1}>`;
+      }
+      if (typeof Kwargs[i] === "function") {
+        this.ptrVars[Object.keys(this.ptrVars).length] = Kwargs[i];
+        kwargs[i] = `fn_ADDR&<${Object.keys(this.ptrVars).length - 1}>`;
+      } else {
+        kwargs[i] = Kwargs[i];
       }
     });
     const procId = this.processes.length;
@@ -109,7 +120,7 @@ class Language_setup {
       kwargs: kwargs,
       process: procId,
     };
-    this.socket.write(JSON.stringify(data));
+    this.socket.write(JSON.stringify(data) + '\n');
     this.processes.push(procId);
     let returnData: ReturnData = JSON.parse(await this.read());
     while (returnData.process !== procId) {
@@ -129,7 +140,7 @@ class Language_setup {
       moduleName: moduleName,
       process: procId,
     };
-    this.socket.write(JSON.stringify(data));
+    this.socket.write(JSON.stringify(data)+'\n');
     let returnData: ReturnData = JSON.parse(await this.read());
     while (returnData.process !== procId) {
       returnData = JSON.parse(await this.read());
@@ -155,7 +166,7 @@ async function Language(
     key: KEY,
   };
   lng.socket.setMaxListeners(3000);
-  lng.socket.write(JSON.stringify(lng.thisHandshake));
+  lng.socket.write(JSON.stringify(lng.thisHandshake)+'\n');
   lng.handshake = JSON.parse(await lng.read());
   lng.socket.on("data", (dataRaw) => {
     let data: RequestData2 = JSON.parse(dataRaw.toString());
@@ -165,7 +176,7 @@ async function Language(
           error: false,
           value: lng.ptrVars[data.attr[0].toString()](...data.args),
           process: data.process,
-        })
+        }) + "\n"
       );
       delete lng.ptrVars[data.attr[0].toString()];
     } else if (data.type === "import") {

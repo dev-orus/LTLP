@@ -72,13 +72,21 @@ def handle_client(c: socket.socket, addr):
                         for i in data['attr']:
                             attr = getattr(attr, i)
                         rawArgs = data['args']
+                        rawKwargs = data['kwargs']
                         args = []
+                        kwargs = {}
                         for arg in rawArgs:
                             if str(arg).startswith('fn_ADDR&<') and str(arg).endswith('>'):
                                 args.append(createFunction(c, int(str(arg).removeprefix('fn_ADDR&<').removesuffix('>'))))
                             else:
                                 args.append(arg)
-                        out = attr(*args)
+                        for karg in rawKwargs:
+                            if str(rawKwargs[karg]).startswith('fn_ADDR&<') and str(rawKwargs[karg]).endswith('>'):
+                                kwargs[karg] = createFunction(c, str(rawKwargs[karg]).removeprefix('fn_ADDR&<').removesuffix('>'))
+                            else:
+                                kwargs[karg] = rawKwargs[karg]
+                        out = attr(*args, **kwargs)
+                        print(out+10)
                     elif data['type']=='import':
                         OBJECTS[data['moduleName']] = __import__(data['moduleName'])
                     c.sendall(json.dumps({
